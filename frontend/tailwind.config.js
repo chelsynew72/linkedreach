@@ -26,8 +26,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-inter-mono)', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
