@@ -50,9 +50,19 @@ export class LinkedInBrowserService {
     }
 
     const browser = await pup.launch({
-      headless: 'new',
+      headless: false,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
-      args: launchArgs,
+      args: [
+        ...launchArgs,
+        '--start-maximized',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--flag-switches-begin',
+        '--disable-site-isolation-trials',
+        '--flag-switches-end',
+      ],
+      defaultViewport: null,
+      ignoreDefaultArgs: ['--enable-automation'],
     });
 
     this.browsers.set(accountId, browser);
@@ -68,6 +78,14 @@ export class LinkedInBrowserService {
       await page.setUserAgent(
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       );
+
+      // Remove webdriver flag that LinkedIn detects
+      await page.evaluateOnNewDocument(() => {
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        window.chrome = { runtime: {} };
+      });
 
       // Block images and fonts to speed up loading
       await page.setRequestInterception(true);
