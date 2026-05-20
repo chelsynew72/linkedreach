@@ -50,8 +50,19 @@ export class LinkedInBrowserService {
     }
 
     const browser = await pup.launch({
-      headless: 'new',
-      args: launchArgs,
+      headless: false,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
+      args: [
+        ...launchArgs,
+        '--start-maximized',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--flag-switches-begin',
+        '--disable-site-isolation-trials',
+        '--flag-switches-end',
+      ],
+      defaultViewport: null,
+      ignoreDefaultArgs: ['--enable-automation'],
     });
 
     this.browsers.set(accountId, browser);
@@ -68,40 +79,156 @@ export class LinkedInBrowserService {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       );
 
-      await page.goto('https://www.linkedin.com/login', { waitUntil: 'networkidle2' });
-      await this.humanDelay(1000, 2000);
+      // Remove webdriver flag that LinkedIn detects
+      await page.evaluateOnNewDocument(() => {
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        window.chrome = { runtime: {} };
+      });
 
-      await page.type('#username', email, { delay: Math.random() * 100 + 50 });
+      // Block images and fonts to speed up loading
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        if (['image', 'font', 'stylesheet'].includes(req.resourceType())) {
+          req.abort();
+        } else {
+          req.continue();
+        }
+      });
+
+      this.logger.log(`Navigating to LinkedIn login page...`);
+      await page.goto('https://www.linkedin.com/login', {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+      });
+
+      // Wait longer for page to settle
+      await this.humanDelay(3000, 5000);
+
+      // Log current URL and page title for debugging
+      const currentUrl = page.url();
+      const title = await page.title();
+      this.logger.log(`Page loaded: ${currentUrl} | Title: ${title}`);
+
+      // Handle cookie consent banner if present
+      try {
+        const cookieBtn = await page.$('button[action-type="ACCEPT"]') ||
+                          await page.$('[data-tracking-control-name="public_jobs_nav-header-logo"]');
+        if (cookieBtn) {
+          await cookieBtn.click();
+          await this.humanDelay(1000, 2000);
+        }
+      } catch (_) {}
+
+      // Try multiple selectors for email field
+      const emailSelectors = ['#username', 'input[name="session_key"]', 'input[type="email"]', 'input[autocomplete="username"]'];
+      let emailField = null;
+      for (const sel of emailSelectors) {
+        try {
+          await page.waitForSelector(sel, { timeout: 5000 });
+          emailField = await page.$(sel);
+          if (emailField) {
+            this.logger.log(`Found email field with selector: ${sel}`);
+            break;
+          }
+        } catch (_) {}
+      }
+
+      if (!emailField) {
+        const pageContent = await page.content();
+        this.logger.error(`Could not find email field. URL: ${page.url()}`);
+        // Take screenshot for debugging
+        await page.screenshot({ path: `/tmp/linkedin_debug_${accountId}.png` });
+        this.logger.log(`Debug screenshot saved to /tmp/linkedin_debug_${accountId}.png`);
+        await page.close();
+        await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, 'Could not find login form - check /tmp/linkedin_debug_*.png');
+        return false;
+      }
+
+      await emailField.click();
+      await emailField.type(email, { delay: Math.random() * 80 + 40 });
       await this.humanDelay(500, 1000);
-      await page.type('#password', password, { delay: Math.random() * 100 + 50 });
+
+      // Try multiple selectors for password field
+      const passwordSelectors = ['#password', 'input[name="session_password"]', 'input[type="password"]'];
+      let passwordField = null;
+      for (const sel of passwordSelectors) {
+        passwordField = await page.$(sel);
+        if (passwordField) break;
+      }
+
+      if (!passwordField) {
+        await page.close();
+        await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, 'Could not find password field');
+        return false;
+      }
+
+      await passwordField.click();
+      await passwordField.type(password, { delay: Math.random() * 80 + 40 });
       await this.humanDelay(800, 1500);
 
-      await page.click('[data-litms-control-urn="login-submit"]');
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+      // Try multiple submit button selectors
+      const submitSelectors = [
+        '[data-litms-control-urn="login-submit"]',
+        'button[type="submit"]',
+        '.login__form_action_container button',
+        'button[aria-label="Sign in"]',
+      ];
+      let submitted = false;
+      for (const sel of submitSelectors) {
+        const btn = await page.$(sel);
+        if (btn) {
+          await btn.click();
+          submitted = true;
+          this.logger.log(`Clicked submit with selector: ${sel}`);
+          break;
+        }
+      }
 
+      if (!submitted) {
+        await page.keyboard.press('Enter');
+      }
+
+      // Wait for navigation
+      try {
+        await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 });
+      } catch (_) {
+        // Navigation may have already completed
+      }
+
+      await this.humanDelay(2000, 3000);
       const url = page.url();
-      if (url.includes('/feed') || url.includes('/in/')) {
-        // Save session cookies
+      this.logger.log(`After login URL: ${url}`);
+
+      if (url.includes('/feed') || url.includes('/mynetwork') || url.includes('/in/')) {
         const cookies = await page.cookies();
-        await this.accountsService.saveSession(accountId, JSON.stringify(cookies), {
-          linkedinProfileUrl: url,
-        });
+        // Try to get profile info
+        let profileData: any = { linkedinProfileUrl: url };
+        try {
+          const nameEl = await page.$('.global-nav__me-photo') || await page.$('[data-control-name="identity_profile_photo"]');
+          profileData.profileName = email.split('@')[0];
+        } catch (_) {}
+
+        await this.accountsService.saveSession(accountId, JSON.stringify(cookies), profileData);
         await this.accountsService.updateStatus(accountId, AccountStatus.ACTIVE);
+        this.logger.log(`✅ Login successful for ${email}`);
         await page.close();
         return true;
       }
 
-      if (url.includes('checkpoint') || url.includes('verify')) {
+      if (url.includes('checkpoint') || url.includes('verify') || url.includes('challenge')) {
         await this.accountsService.updateStatus(
           accountId,
           AccountStatus.REQUIRES_VERIFICATION,
-          'LinkedIn requires verification',
+          'LinkedIn requires 2FA or email verification. Please verify manually.',
         );
         await page.close();
         return false;
       }
 
-      await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, 'Login failed');
+      await page.screenshot({ path: `/tmp/linkedin_failed_${accountId}.png` });
+      await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, `Login failed - ended up at: ${url}`);
       await page.close();
       return false;
     } catch (err) {
