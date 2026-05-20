@@ -76,6 +76,16 @@ export class AccountsService {
     await this.repo.remove(account);
   }
 
+  async updateLimits(
+    id: string,
+    userId: string,
+    limits: { dailyConnectionLimit?: number; dailyMessageLimit?: number },
+  ): Promise<LinkedInAccount> {
+    const account = await this.findOne(id, userId);
+    Object.assign(account, limits);
+    return this.repo.save(account);
+  }
+
   async canSendConnection(id: string): Promise<boolean> {
     const account = await this.repo.findOne({ where: { id } });
     if (!account || account.status !== AccountStatus.ACTIVE) return false;

@@ -16,6 +16,11 @@ export default function AccountsPage() {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginTarget, setLoginTarget] = useState<string | null>(null);
   const [loginCreds, setLoginCreds] = useState({ email: '', password: '' });
+  const [addForm, setAddForm] = useState({ 
+    email: '', 
+    dailyConnectionLimit: 20,
+    proxyUrl: ''
+  });
 
   const { data: accounts = [], isLoading } = useQuery<LinkedInAccount[]>({
     queryKey: ['accounts'],
@@ -28,7 +33,7 @@ export default function AccountsPage() {
       qc.invalidateQueries({ queryKey: ['accounts'] });
       toast.success('Account added. Now connect it via login.');
       setShowAdd(false);
-      setLoginForm({ email: '', password: '' });
+      setAddForm({ email: '', dailyConnectionLimit: 20, proxyUrl: '' });
     },
     onError: () => toast.error('Failed to add account'),
   });
@@ -78,15 +83,17 @@ export default function AccountsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>LinkedIn Email</label>
                 <input className="input" type="email" placeholder="your@email.com"
-                  value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} />
+                  value={addForm.email} onChange={(e) => setAddForm({ ...addForm, email: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Daily Connection Limit</label>
-                <input className="input" type="number" defaultValue={20} min={5} max={40} />
+                <input className="input" type="number" value={addForm.dailyConnectionLimit} min={5} max={40}
+                  onChange={(e) => setAddForm({ ...addForm, dailyConnectionLimit: parseInt(e.target.value) || 20 })} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Proxy URL (optional)</label>
-                <input className="input" type="text" placeholder="http://user:pass@host:port" />
+                <input className="input" type="text" placeholder="http://user:pass@host:port"
+                  value={addForm.proxyUrl} onChange={(e) => setAddForm({ ...addForm, proxyUrl: e.target.value })} />
               </div>
               <div className="p-3 rounded-lg flex gap-2" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)' }}>
                 <AlertCircle size={15} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--yellow)' }} />
@@ -97,8 +104,12 @@ export default function AccountsPage() {
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setShowAdd(false)} className="btn-secondary flex-1">Cancel</button>
                 <button
-                  onClick={() => addMutation.mutate({ linkedinEmail: loginForm.email })}
-                  disabled={!loginForm.email || addMutation.isPending}
+                  onClick={() => addMutation.mutate({ 
+                    linkedinEmail: addForm.email,
+                    dailyConnectionLimit: addForm.dailyConnectionLimit,
+                    proxyUrl: addForm.proxyUrl || undefined
+                  })}
+                  disabled={!addForm.email || addMutation.isPending}
                   className="btn-primary flex-1 justify-center">
                   {addMutation.isPending ? 'Adding...' : 'Add Account'}
                 </button>

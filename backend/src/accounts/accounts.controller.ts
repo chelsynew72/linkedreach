@@ -45,9 +45,7 @@ export class AccountsController {
     @Param('id') id: string,
     @Body() body: { dailyConnectionLimit?: number; dailyMessageLimit?: number },
   ) {
-    const account = await this.accountsService.findOne(id, req.user.id);
-    Object.assign(account, body);
-    return account;
+    return this.accountsService.updateLimits(id, req.user.id, body);
   }
 
   @Delete(':id')
