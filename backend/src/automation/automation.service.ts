@@ -4,7 +4,7 @@ import { Queue } from 'bull';
 import { CampaignsService } from '../campaigns/campaigns.service';
 import { LeadsService } from '../leads/leads.service';
 import { AccountsService } from '../accounts/accounts.service';
-import { LeadStatus } from '../leads/lead.entity';
+// import { LeadStatus } from '../leads/lead.entity';
 import { StepType } from '../campaigns/campaign.entity';
 
 export interface AutomationJob {
