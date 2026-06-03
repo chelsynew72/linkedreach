@@ -84,7 +84,7 @@ export class LinkedInBrowserService {
         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
         Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
         Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-        window.chrome = { runtime: {} };
+        (window as any).chrome = { runtime: {} };
       });
 
       // Block images and fonts to speed up loading
@@ -232,8 +232,9 @@ export class LinkedInBrowserService {
       await page.close();
       return false;
     } catch (err) {
-      this.logger.error(`Login failed for account ${accountId}: ${err.message}`);
-      await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Login failed for account ${accountId}: ${errorMessage}`);
+      await this.accountsService.updateStatus(accountId, AccountStatus.ERROR, errorMessage);
       return false;
     }
   }
@@ -293,8 +294,9 @@ export class LinkedInBrowserService {
       await page.close();
       return { success: true };
     } catch (err) {
-      this.logger.error(`Connection request failed: ${err.message}`);
-      return { success: false, error: err.message };
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Connection request failed: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -346,8 +348,9 @@ export class LinkedInBrowserService {
       await page.close();
       return { success: true };
     } catch (err) {
-      this.logger.error(`Message send failed: ${err.message}`);
-      return { success: false, error: err.message };
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Message send failed: ${errorMessage}`);
+      return { success: false, error: errorMessage };
     }
   }
 
