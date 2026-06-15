@@ -37,12 +37,13 @@ export class LinkedInBrowserService {
 
     const launchArgs: string[] = [
       '--no-sandbox',
-      '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-accelerated-2d-canvas',
-      '--no-first-run',
       '--no-zygote',
       '--disable-gpu',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-web-security',
+      '--allow-running-insecure-content',
     ];
 
     if (account?.proxyUrl) {
@@ -52,6 +53,8 @@ export class LinkedInBrowserService {
     const browser = await pup.launch({
       headless: false,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
+      protocolTimeout: 120000,
+      timeout: 120000,
       args: [
         ...launchArgs,
         '--start-maximized',
@@ -60,6 +63,9 @@ export class LinkedInBrowserService {
         '--flag-switches-begin',
         '--disable-site-isolation-trials',
         '--flag-switches-end',
+        '--disable-extensions',
+        '--disable-default-apps',
+        '--no-first-run',
       ],
       defaultViewport: null,
       ignoreDefaultArgs: ['--enable-automation'],
