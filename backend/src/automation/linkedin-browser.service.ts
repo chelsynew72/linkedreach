@@ -51,7 +51,7 @@ export class LinkedInBrowserService {
     }
 
     const browser = await pup.launch({
-      headless: false,
+      headless: 'new',
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
       protocolTimeout: 120000,
       timeout: 120000,
