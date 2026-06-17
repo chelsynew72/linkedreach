@@ -24,6 +24,15 @@ export class AutomationProcessor {
     const { type, accountId, leadId, campaignId, profileUrl, message, note, stepIndex } = job.data;
     this.logger.log(`Processing ${type} job for lead ${leadId}`);
 
+    // Skip if lead's sequence has been auto-paused due to a reply
+    const leadRecord = await this.leadsService.getPendingLeads(campaignId, 1000)
+      .then((leads) => leads.find((l) => l.id === leadId))
+      .catch(() => null);
+    if (leadRecord?.sequencePaused) {
+      this.logger.log(`Skipping job for lead ${leadId} - sequence paused (lead replied)`);
+      return;
+    }
+
     try {
       switch (type) {
         case 'connection': {
