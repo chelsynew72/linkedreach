@@ -249,7 +249,12 @@ export default function CampaignDetailPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3"><LeadStatusBadge status={lead.status} /></td>
+                  <td className="px-5 py-3">
+                    <LeadStatusBadge status={lead.status} />
+                    {(lead as any).sequencePaused && (
+                      <span className="badge badge-yellow mt-1" style={{ display: 'block', width: 'fit-content' }}>⏸ Auto-paused (replied)</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3">
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Step {lead.currentStep + 1}</span>
                   </td>
