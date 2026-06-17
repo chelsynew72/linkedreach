@@ -393,4 +393,63 @@ export class LinkedInBrowserService {
       this.browsers.delete(id);
     }
   }
+
+
+  /**
+   * Checks LinkedIn messaging inbox for new replies from leads.
+   * Returns a list of conversations with new inbound messages since last check.
+   */
+  async checkForNewReplies(accountId: string): Promise<{ profileUrl: string; lastMessage: string; conversationId: string }[]> {
+    const replies: { profileUrl: string; lastMessage: string; conversationId: string }[] = [];
+    try {
+      const account = await this.accountsService.findOne(accountId, null).catch(() => null);
+      if (!account?.sessionCookies) return replies;
+
+      const browser = await this.getBrowserForAccount(accountId);
+      const page = await browser.newPage();
+      const cookies = JSON.parse(account.sessionCookies);
+      await page.setCookie(...cookies);
+      await page.setViewport({ width: 1280, height: 800 });
+
+      await page.goto('https://www.linkedin.com/messaging/', {
+        waitUntil: 'domcontentloaded',
+        timeout: 45000,
+      });
+      await this.humanDelay(2000, 3500);
+
+      const conversations = await page.evaluate(() => {
+        const items = Array.from(document.querySelectorAll('.msg-conversation-listitem'));
+        return items.slice(0, 20).map((item) => {
+          const profileLink = item.querySelector('a.msg-conversation-listitem__link');
+          const nameEl = item.querySelector('.msg-conversation-listitem__participant-names');
+          const previewEl = item.querySelector('.msg-conversation-card__message-snippet');
+          const unread = item.classList.contains('msg-conversation-listitem--unread') ||
+                          !!item.querySelector('.notification-badge');
+          return {
+            profileUrl: profileLink ? (profileLink as HTMLAnchorElement).href : '',
+            name: nameEl ? nameEl.textContent?.trim() : '',
+            preview: previewEl ? previewEl.textContent?.trim() : '',
+            unread,
+            conversationId: item.getAttribute('data-conversation-id') || '',
+          };
+        });
+      });
+
+      for (const conv of conversations) {
+        if (conv.unread && conv.profileUrl) {
+          replies.push({
+            profileUrl: conv.profileUrl,
+            lastMessage: conv.preview || '',
+            conversationId: conv.conversationId || conv.profileUrl,
+          });
+        }
+      }
+
+      await page.close();
+    } catch (err) {
+      this.logger.warn(`Reply check failed for account ${accountId}: ${err.message}`);
+    }
+    return replies;
+  }
+
 }
