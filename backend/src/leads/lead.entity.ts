@@ -79,6 +79,12 @@ export class Lead {
   @Column({ nullable: true, type: 'timestamp' })
   lastReplyAt: Date;
 
+  @Column({ default: false })
+  sequencePaused: boolean;
+
+  @Column({ nullable: true })
+  pauseReason: string;
+
   @Column({ nullable: true })
   errorMessage: string;
 
