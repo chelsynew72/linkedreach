@@ -71,4 +71,19 @@ export class LeadsService {
   async assignAccount(id: string, accountId: string) {
     await this.repo.update(id, { assignedAccountId: accountId });
   }
+
+  async pauseSequenceOnReply(leadId: string, replyPreview: string) {
+    await this.repo.update(leadId, {
+      status: LeadStatus.REPLIED,
+      sequencePaused: true,
+      pauseReason: 'Lead replied - automation paused to avoid spamming',
+      lastReplyAt: new Date(),
+    });
+    await this.addActivity(leadId, 'reply_detected', replyPreview.slice(0, 200));
+  }
+
+  async findByProfileUrl(profileUrl: string) {
+    return this.repo.findOne({ where: { linkedinProfileUrl: profileUrl } });
+  }
+
 }
