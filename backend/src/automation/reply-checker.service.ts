@@ -32,14 +32,14 @@ export class ReplyCheckerService {
         await new Promise((r) => setTimeout(r, 5000));
       }
     } catch (err) {
-      this.logger.error(`Reply check cycle failed: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Reply check cycle failed: ${message}`);
     }
   }
 
   async checkAccountReplies(accountId: string, userId: string) {
     try {
       const replies = await this.browserService.checkForNewReplies(accountId);
-
       for (const reply of replies) {
         const lead = await this.leadsService.findByProfileUrl(reply.profileUrl);
 
@@ -66,7 +66,8 @@ export class ReplyCheckerService {
         this.logger.log(`Account ${accountId}: found ${replies.length} new replies`);
       }
     } catch (err) {
-      this.logger.warn(`Reply check failed for account ${accountId}: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Reply check failed for account ${accountId}: ${message}`);
     }
   }
 }
