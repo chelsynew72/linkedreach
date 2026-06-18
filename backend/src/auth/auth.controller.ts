@@ -6,7 +6,7 @@ import { AuthService } from './auth.service';
 export class RegisterDto {
   @IsEmail() email: string;
   @IsString() name: string;
-  @IsString() @MinLength(8) password: string;
+  @IsString() @MinLength(9) password: string;
 }
 
 export class LoginDto {

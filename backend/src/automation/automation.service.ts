@@ -63,7 +63,7 @@ export class AutomationService {
       const delayMs = (i * 60000) + Math.floor(Math.random() * 60000);
       await this.automationQueue.add(job, {
         delay: delayMs,
-        attempts: 2,
+        attempts: 3,
         backoff: { type: 'exponential', delay: 30000 },
       });
     }
