@@ -46,11 +46,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   fetchMe: async () => {
+    // Load token from localStorage on client side only
+    const token = typeof window !== 'undefined' ? localStorage.getItem('lr_token') : null;
+    if (!token) {
+      set({ user: null, token: null });
+      return;
+    }
+    set({ token });
     try {
       const { data } = await api.get('/users/me');
-      set({ user: data });
+      set({ user: data, token });
     } catch {
-      localStorage.removeItem('lr_token');
+      if (typeof window !== 'undefined') localStorage.removeItem('lr_token');
       set({ user: null, token: null });
     }
   },
