@@ -29,6 +29,8 @@ import { AutomationModule } from './automation/automation.module';
         autoLoadEntities: true,
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
+        ssl: { rejectUnauthorized: false },
+        extra: { ssl: { rejectUnauthorized: false } },
       }),
     }),
     BullModule.forRootAsync({
