@@ -35,41 +35,41 @@ export class LinkedInBrowserService {
     const pup = await this.getPuppeteer();
     const account = await this.accountsService.findOne(accountId, null).catch(() => null);
 
-    const launchArgs: string[] = [
-      '--no-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-zygote',
-      '--disable-gpu',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-web-security',
-      '--allow-running-insecure-content',
-    ];
+    let browser;
 
-    if (account?.proxyUrl) {
-      launchArgs.push(`--proxy-server=${account.proxyUrl}`);
-    }
+    // Use Browserless if token is set (production/cloud), otherwise use local Chrome
+    if (process.env.BROWSERLESS_TOKEN) {
+      this.logger.log('Using Browserless.io cloud browser');
+      browser = await pup.connect({
+        browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
+      });
+    } else {
+      this.logger.log('Using local Chrome browser');
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ||
+        '/usr/bin/google-chrome';
 
-    const browser = await pup.launch({
-      headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
-      protocolTimeout: 120000,
-      timeout: 120000,
-      args: [
-        ...launchArgs,
-        '--start-maximized',
+      const launchArgs: string[] = [
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-zygote',
+        '--disable-gpu',
         '--disable-blink-features=AutomationControlled',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--flag-switches-begin',
-        '--disable-site-isolation-trials',
-        '--flag-switches-end',
-        '--disable-extensions',
-        '--disable-default-apps',
-        '--no-first-run',
-      ],
-      defaultViewport: null,
-      ignoreDefaultArgs: ['--enable-automation'],
-    });
+      ];
+
+      if (account?.proxyUrl) {
+        launchArgs.push(`--proxy-server=${account.proxyUrl}`);
+      }
+
+      browser = await pup.launch({
+        headless: 'new',
+        executablePath,
+        protocolTimeout: 120000,
+        timeout: 120000,
+        args: launchArgs,
+        ignoreDefaultArgs: ['--enable-automation'],
+      });
+    }
 
     this.browsers.set(accountId, browser);
     return browser;
@@ -447,7 +447,8 @@ export class LinkedInBrowserService {
 
       await page.close();
     } catch (err) {
-      this.logger.warn(`Reply check failed for account ${accountId}: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Reply check failed for account ${accountId}: ${errorMessage}`);
     }
     return replies;
   }
