@@ -6,12 +6,10 @@ import { DashboardStats, Campaign } from '@/types';
 import { formatNumber } from '@/lib/utils';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 import {
-  Megaphone, UserCheck, Send, MessageSquare, TrendingUp,
-  ArrowUpRight, Activity, Zap, ChevronRight,
+  Megaphone, UserCheck, Send, MessageSquare,
+  TrendingUp, ArrowUpRight, Activity, Zap, ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
-
-// Chart data is built from real campaign data below
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -25,6 +23,30 @@ export default function DashboardPage() {
     queryKey: ['campaigns'],
     queryFn: () => api.get('/campaigns').then((r) => r.data),
   });
+
+  // Build real chart data from campaigns
+  const chartData = (() => {
+    const days: Record<string, { day: string; connections: number; messages: number; replies: number }> = {};
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      days[key] = { day: key, connections: 0, messages: 0, replies: 0 };
+    }
+    (campaigns || []).forEach((c) => {
+      if (!c.startedAt) return;
+      const key = new Date(c.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (days[key]) {
+        days[key].connections += c.connectionsSent || 0;
+        days[key].messages += c.messagesSent || 0;
+        days[key].replies += c.repliesReceived || 0;
+      }
+    });
+    return Object.values(days);
+  })();
+
+  const hasChartData = chartData.some(d => d.connections > 0 || d.messages > 0);
 
   const statCards = [
     {
@@ -63,7 +85,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Good morning, {user?.name?.split(' ')[0]} 
+            Good morning, {user?.name?.split(' ')[0]} 👋
           </h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
             Here's what's happening with your outreach today.
@@ -77,15 +99,12 @@ export default function DashboardPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statCards.map(({ label, value, sub, icon: Icon, color }) => (
-          <div key={label} className="card p-5 hover:border-opacity-60 transition-all duration-200">
+          <div key={label} className="card p-5 transition-all duration-200">
             <div className="flex items-start justify-between mb-4">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: `${color}18`, color }}>
                 <Icon size={19} />
               </div>
-              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--green)' }}>
-                <ArrowUpRight size={12} /> +12%
-              </span>
             </div>
             <p className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{value}</p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</p>
@@ -107,7 +126,7 @@ export default function DashboardPage() {
               {[
                 { label: 'Connections', color: 'var(--brand)' },
                 { label: 'Messages', color: 'var(--green)' },
-                { label: 'Replies', color: 'var(--yellow)' },
+                { label: 'Replies', color: 'var(--blue)' },
               ].map(({ label, color }) => (
                 <span key={label} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full" style={{ background: color }} />
@@ -116,27 +135,36 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={MOCK_CHART}>
-              <defs>
-                {[
-                  { id: 'conn', color: '#7c6af5' },
-                  { id: 'msg', color: '#34d399' },
-                  { id: 'rep', color: '#fbbf24' },
-                ].map(({ id, color }) => (
-                  <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
-                    <stop offset="95%" stopColor={color} stopOpacity={0} />
-                  </linearGradient>
-                ))}
-              </defs>
-              <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '12px' }} />
-              <Area type="monotone" dataKey="connections" stroke="#7c6af5" fill="url(#conn)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="messages" stroke="#34d399" fill="url(#msg)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="replies" stroke="#fbbf24" fill="url(#rep)" strokeWidth={2} dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
+
+          {!hasChartData ? (
+            <div className="flex flex-col items-center justify-center h-48 gap-2">
+              <Activity size={28} style={{ color: 'var(--text-muted)' }} />
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No activity yet</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Launch a campaign to see data here</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <defs>
+                  {[
+                    { id: 'conn', color: '#f97316' },
+                    { id: 'msg', color: '#22c55e' },
+                    { id: 'rep', color: '#3b82f6' },
+                  ].map(({ id, color }) => (
+                    <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={color} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} interval={2} />
+                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '12px' }} />
+                <Area type="monotone" dataKey="connections" stroke="#f97316" fill="url(#conn)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="messages" stroke="#22c55e" fill="url(#msg)" strokeWidth={2} dot={false} />
+                <Area type="monotone" dataKey="replies" stroke="#3b82f6" fill="url(#rep)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         {/* Recent Campaigns */}
