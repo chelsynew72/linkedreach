@@ -1,4 +1,4 @@
-# LinkedReach 🚀
+# LinkedReach 
 
 A full-stack LinkedIn automation platform inspired by HeyReach — built with **Next.js 14** (frontend) and **NestJS** (backend).
 
@@ -6,19 +6,19 @@ A full-stack LinkedIn automation platform inspired by HeyReach — built with **
 
 ## ✨ Features
 
-- 🔐 **JWT Auth** — register / login / protected routes
-- 🏢 **Multi-Account Management** — connect unlimited LinkedIn accounts with daily limits, proxy support, and live status
-- 🎯 **Campaign Builder** — drag-and-drop sequence builder with connection requests, messages, profile views, follows, and delays
-- 📋 **Lead Management** — CSV import, per-lead status tracking, activity log, pagination
-- 🤖 **Puppeteer Automation** — stealth browser sessions, human-like delays, round-robin account rotation, Bull queue with rate limiting
-- 📥 **Unified Inbox** — all LinkedIn messages from all accounts in one place
-- 📊 **Analytics** — dashboard KPIs, 30-day trend charts, campaign funnel breakdown
-- ⚙️ **Settings** — profile, notifications, security, billing plans
-- 🐳 **Docker Compose** — one command to spin up Postgres + Redis + API + UI
+-  **JWT Auth** — register / login / protected routes
+-  **Multi-Account Management** — connect unlimited LinkedIn accounts with daily limits, proxy support, and live status
+-  **Campaign Builder** — drag-and-drop sequence builder with connection requests, messages, profile views, follows, and delays
+-  **Lead Management** — CSV import, per-lead status tracking, activity log, pagination
+-  **Puppeteer Automation** — stealth browser sessions, human-like delays, round-robin account rotation, Bull queue with rate limiting
+-  **Unified Inbox** — all LinkedIn messages from all accounts in one place
+-  **Analytics** — dashboard KPIs, 30-day trend charts, campaign funnel breakdown
+-  **Settings** — profile, notifications, security, billing plans
+-  **Docker Compose** — one command to spin up Postgres + Redis + API + UI
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 | Layer | Tech |
 |---|---|
@@ -31,7 +31,7 @@ A full-stack LinkedIn automation platform inspired by HeyReach — built with **
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Node.js 20+
@@ -75,7 +75,7 @@ npm run dev
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 linkedreach/
@@ -109,7 +109,7 @@ linkedreach/
 
 ---
 
-## 🔧 Linting
+##  Linting
 
 ```bash
 # Frontend
@@ -127,7 +127,7 @@ npm run type-check    # TypeScript check
 
 ---
 
-## ⚠️ Important Notes
+##  Important Notes
 
 1. **LinkedIn ToS** — Browser automation violates LinkedIn's Terms of Service. Use responsibly and at your own risk.
 2. **Proxies** — Assign a dedicated residential proxy per LinkedIn account to reduce ban risk.
@@ -137,7 +137,7 @@ npm run type-check    # TypeScript check
 
 ---
 
-## 📡 API Endpoints
+ API Endpoints
 
 | Method | Path | Description |
 |---|---|---|
