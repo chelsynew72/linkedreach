@@ -16,15 +16,15 @@ export class AnalyticsController {
     return this.analyticsService.getDashboardStats(req.user.id);
   }
 
+  @Get('daily-stats')
+  @ApiOperation({ summary: 'Get daily activity stats for the last N days' })
+  getDailyStats(@Request() req, @Query('days') days?: string) {
+    return this.analyticsService.getDailyStats(req.user.id, days ? parseInt(days, 10) : 30);
+  }
+
   @Get('campaigns/:id')
   @ApiOperation({ summary: 'Get analytics for a campaign' })
   getCampaign(@Param('id') id: string) {
     return this.analyticsService.getCampaignAnalytics(id);
-  }
-
-  @Get('daily-stats')
-  @ApiOperation({ summary: 'Get daily activity stats for the last 30 days' })
-  getDailyStats(@Request() req, @Query('days') days?: number) {
-    return this.analyticsService.getDailyStats(req.user.id, days ? +days : 30);
   }
 }

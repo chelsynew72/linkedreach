@@ -65,12 +65,12 @@ export class AnalyticsService {
         : 0,
     };
   }
-}
 
-  async getDailyStats(userId: string, days = 30) {
+  async getDailyStats(userId: string, days: number = 30) {
     const result: { day: string; connections: number; messages: number; replies: number }[] = [];
     const now = new Date();
 
+    // Initialize all days with zero
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
@@ -78,13 +78,13 @@ export class AnalyticsService {
       result.push({ day: label, connections: 0, messages: 0, replies: 0 });
     }
 
-    // Get all leads with activity logs for this user's campaigns
+    // Get all campaigns for this user
     const campaigns = await this.campaignRepo.find({ where: { userId } });
     const campaignIds = campaigns.map((c) => c.id);
 
     if (campaignIds.length === 0) return result;
 
-    // Query leads with activity logs
+    // Get all leads for those campaigns
     const leads = await this.leadRepo
       .createQueryBuilder('lead')
       .where('lead.campaignId IN (:...ids)', { ids: campaignIds })
@@ -93,6 +93,7 @@ export class AnalyticsService {
     // Parse activity logs and bucket by date
     for (const lead of leads) {
       if (!lead.activityLog || lead.activityLog.length === 0) continue;
+
       for (const entry of lead.activityLog) {
         const entryDate = new Date(entry.timestamp);
         const label = entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -107,3 +108,4 @@ export class AnalyticsService {
 
     return result;
   }
+}
