@@ -66,3 +66,44 @@ export class AnalyticsService {
     };
   }
 }
+
+  async getDailyStats(userId: string, days = 30) {
+    const result: { day: string; connections: number; messages: number; replies: number }[] = [];
+    const now = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      result.push({ day: label, connections: 0, messages: 0, replies: 0 });
+    }
+
+    // Get all leads with activity logs for this user's campaigns
+    const campaigns = await this.campaignRepo.find({ where: { userId } });
+    const campaignIds = campaigns.map((c) => c.id);
+
+    if (campaignIds.length === 0) return result;
+
+    // Query leads with activity logs
+    const leads = await this.leadRepo
+      .createQueryBuilder('lead')
+      .where('lead.campaignId IN (:...ids)', { ids: campaignIds })
+      .getMany();
+
+    // Parse activity logs and bucket by date
+    for (const lead of leads) {
+      if (!lead.activityLog || lead.activityLog.length === 0) continue;
+      for (const entry of lead.activityLog) {
+        const entryDate = new Date(entry.timestamp);
+        const label = entryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const bucket = result.find((r) => r.day === label);
+        if (!bucket) continue;
+
+        if (entry.action === 'connection_sent') bucket.connections += 1;
+        if (entry.action === 'message_sent') bucket.messages += 1;
+        if (entry.action === 'reply_detected') bucket.replies += 1;
+      }
+    }
+
+    return result;
+  }

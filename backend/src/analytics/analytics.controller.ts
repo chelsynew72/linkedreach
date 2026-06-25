@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
@@ -20,5 +20,11 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get analytics for a campaign' })
   getCampaign(@Param('id') id: string) {
     return this.analyticsService.getCampaignAnalytics(id);
+  }
+
+  @Get('daily-stats')
+  @ApiOperation({ summary: 'Get daily activity stats for the last 30 days' })
+  getDailyStats(@Request() req, @Query('days') days?: number) {
+    return this.analyticsService.getDailyStats(req.user.id, days ? +days : 30);
   }
 }
