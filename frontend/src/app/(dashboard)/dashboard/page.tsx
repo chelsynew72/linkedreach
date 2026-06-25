@@ -11,12 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const MOCK_CHART = Array.from({ length: 14 }, (_, i) => ({
-  day: `Day ${i + 1}`,
-  connections: Math.floor(Math.random() * 80 + 20),
-  messages: Math.floor(Math.random() * 40 + 10),
-  replies: Math.floor(Math.random() * 15 + 2),
-}));
+// Chart data is built from real campaign data below
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
