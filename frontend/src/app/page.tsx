@@ -79,10 +79,7 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(249,115,22,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', top: '60%', left: '25%', width: 300, height: 200, background: 'radial-gradient(ellipse, rgba(249,115,22,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div className="fade-up" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 100, background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.25)', marginBottom: 32, fontSize: 12, fontWeight: 600, color: '#fb923c', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          <span className="pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: '#f97316', display: 'inline-block' }} />
-          1,200+ sales teams trust LinkedReach
-        </div>
+        
 
         <h1 className="fade-up-1" style={{ fontSize: 'clamp(42px, 7vw, 82px)', fontWeight: 700, lineHeight: 1.06, letterSpacing: '-0.03em', marginBottom: 28, maxWidth: 860 }}>
           LinkedIn outreach<br />
@@ -99,9 +96,7 @@ export default function LandingPage() {
           <Link href="/register" className="btn-orange" style={{ fontSize: 16, padding: '15px 36px' }}>
             Start for free <ArrowRight size={17} />
           </Link>
-          <button className="btn-ghost" style={{ fontSize: 16, padding: '15px 36px' }}>
-            <Play size={16} fill="currentColor" /> Watch demo
-          </button>
+          
         </div>
 
         {/* Stats */}
@@ -115,17 +110,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* LOGOS */}
-      <section style={{ padding: '40px 48px', borderTop: '1px solid #141414', borderBottom: '1px solid #141414', background: '#0d0d0d' }}>
-        <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#333', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 28 }}>Used by teams at</p>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 56, flexWrap: 'wrap', opacity: 0.35 }}>
-          {['VELOCITY', 'NEXUS AI', 'STRATUS', 'SPARK HQ', 'GROWTHLAB'].map(n => (
-            <span key={n} style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.12em', color: '#fff' }}>{n}</span>
-          ))}
-        </div>
-      </section>
+     
 
-      {/* FEATURES */}
+      
       <section id="features" style={{ padding: '120px 48px', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 72 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: '#f97316', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 16 }}>Everything you need</p>
