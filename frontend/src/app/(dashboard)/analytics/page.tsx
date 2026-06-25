@@ -20,9 +20,8 @@ export default function AnalyticsPage() {
     queryFn: () => api.get('/campaigns').then((r) => r.data),
   });
 
-  const { data: dailyStats = [], isLoading: dailyLoading } = useQuery
-    { day: string; connections: number; messages: number; replies: number }[]
-  >({
+  type DailyStat = { day: string; connections: number; messages: number; replies: number };
+  const { data: dailyStats = [], isLoading: dailyLoading } = useQuery<DailyStat[]>({
     queryKey: ['daily-stats'],
     queryFn: () => api.get('/analytics/daily-stats?days=30').then((r) => r.data),
   });
